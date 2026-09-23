@@ -61,7 +61,7 @@
     gap: .6rem 3rem;
   }
   @media (max-width: 520px) {
-    input.blank { width: 4.4rem; font-size: 1.4rem; }
+    input.blank { width: 5rem; font-size: 1.3rem; }
     section.task { padding: 1.25rem 1rem 1rem; }
   }
   @media (max-width: 880px) {
@@ -74,7 +74,7 @@
   input.blank {
     font-family: "Caveat", "Comic Sans MS", cursive;
     font-size: 1.6rem; font-weight: 700; color: var(--pen);
-    width: 5.2rem; height: 2.3rem; text-align: center;
+    width: 6rem; height: 2.3rem; text-align: center;
     border: 2px solid var(--box-border); border-radius: 6px;
     background: var(--box); padding: 0 .3rem; line-height: 1;
   }
@@ -104,6 +104,9 @@
     font: inherit; font-size: 1rem; font-weight: 600; padding: .5rem 1.1rem; border-radius: 4px;
     border: 2px solid var(--pen); background: transparent; color: var(--pen); cursor: pointer;
   }
+  button.primary { background: var(--pen); color: var(--panel); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .status { color: var(--muted); font-size: 1rem; margin: .75rem 0 0; }
   button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 </style>
 </head>
@@ -111,15 +114,17 @@
 <main>
   <header>
     <h1>Zamiana jednostek</h1>
-    <p>Wpisz liczby w okienka. Zaraz po wpisaniu zobaczysz zielony ptaszek ✓ albo czerwony krzyżyk ✗. Liczby dziesiętne możesz pisać z przecinkiem (0,5) albo z kropką (0.5).</p>
+    <p>Wpisz liczby w okienka. Liczby dziesiętne możesz pisać z przecinkiem (0,5) albo z kropką (0.5). Gdy wypełnisz wszystkie okienka, na dole strony kliknij „Sprawdź odpowiedzi”: dobre odpowiedzi dostaną zielony ptaszek ✓, a złe czerwony krzyżyk ✗.</p>
   </header>
 
   <div id="tasks"></div>
 
   <div class="total">
-    <span class="score" id="score" aria-live="polite">0 / 0 pkt</span>
+    <button type="button" id="check" class="primary" disabled>Sprawdź odpowiedzi</button>
     <button type="button" id="reset">Wyczyść odpowiedzi</button>
+    <span class="score" id="score" aria-live="polite"></span>
   </div>
+  <p class="status" id="status" aria-live="polite"></p>
 </main>
 
 <script>
@@ -211,42 +216,81 @@
   }
   function same(a, b) { return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)); }
 
-  function check(input) {
+  function clearMark(input) {
     var mark = input.nextElementSibling;
     input.classList.remove("ok", "bad");
     mark.className = "mark";
     mark.textContent = "";
-    if (input.value.trim() === "") return;
+    mark.removeAttribute("aria-label");
+  }
+
+  function check(input) {
+    clearMark(input);
+    var mark = input.nextElementSibling;
     var val = parseAnswer(input.value);
     var good = val !== null && same(val, parseFloat(input.dataset.answer));
     input.classList.add(good ? "ok" : "bad");
     mark.classList.add(good ? "ok" : "bad");
     mark.textContent = good ? "✓" : "✗";
     mark.setAttribute("aria-label", good ? "dobrze" : "źle");
+    return good;
   }
 
-  function updateScores() {
-    var total = 0, all = 0;
+  var inputs = document.querySelectorAll("input.blank");
+  var checkBtn = document.getElementById("check");
+  var scoreEl = document.getElementById("score");
+  var statusEl = document.getElementById("status");
+
+  function updateFilled() {
+    var filled = 0;
+    inputs.forEach(function (i) { if (i.value.trim() !== "") filled++; });
+    var left = inputs.length - filled;
+    checkBtn.disabled = left > 0;
+    statusEl.textContent = left > 0
+      ? "Wypełniono " + filled + " z " + inputs.length + " okienek. Zostało jeszcze " + left + "."
+      : "Wszystkie okienka są wypełnione. Możesz sprawdzić odpowiedzi.";
+  }
+
+  function checkAll() {
+    var total = 0;
     document.querySelectorAll("section.task").forEach(function (sec) {
-      var inputs = sec.querySelectorAll("input.blank");
-      var good = sec.querySelectorAll("input.blank.ok").length;
+      var list = sec.querySelectorAll("input.blank");
+      var good = 0;
+      list.forEach(function (i) { if (check(i)) good++; });
       var c = sec.querySelector(".counter");
-      c.textContent = good + " / " + inputs.length;
-      c.classList.toggle("full", good === inputs.length);
-      total += good; all += inputs.length;
+      c.textContent = good + " / " + list.length + " pkt";
+      c.classList.toggle("full", good === list.length);
+      total += good;
     });
-    document.getElementById("score").textContent = total + " / " + all + " pkt";
+    scoreEl.textContent = total + " / " + inputs.length + " pkt";
+    statusEl.textContent = total === inputs.length
+      ? "Wszystko dobrze. Brawo!"
+      : "Popraw odpowiedzi z czerwonym krzyżykiem i kliknij „Sprawdź odpowiedzi” jeszcze raz.";
+    var firstBad = document.querySelector("input.blank.bad");
+    if (firstBad) firstBad.focus({ preventScroll: false });
   }
 
   render();
-  document.querySelectorAll("input.blank").forEach(function (i) {
-    i.addEventListener("input", function () { check(i); updateScores(); });
+  inputs = document.querySelectorAll("input.blank");
+  inputs.forEach(function (i) {
+    i.addEventListener("input", function () {
+      clearMark(i);
+      scoreEl.textContent = "";
+      document.querySelectorAll(".counter").forEach(function (c) { c.textContent = ""; c.classList.remove("full"); });
+      updateFilled();
+    });
+    i.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !checkBtn.disabled) checkAll();
+    });
   });
+  checkBtn.addEventListener("click", checkAll);
   document.getElementById("reset").addEventListener("click", function () {
-    document.querySelectorAll("input.blank").forEach(function (i) { i.value = ""; check(i); });
-    updateScores();
+    inputs.forEach(function (i) { i.value = ""; clearMark(i); });
+    scoreEl.textContent = "";
+    document.querySelectorAll(".counter").forEach(function (c) { c.textContent = ""; c.classList.remove("full"); });
+    updateFilled();
   });
-  updateScores();
+  updateFilled();
 </script>
 </body>
 </html>
