@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zamiana jednostek – zadanie domowe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbfcfe; --grid: #dde7f2; --ink: #1c2230; --muted: #5b6475;
+    --pen: #1f47b8; --ok: #1d7a3a; --ok-bg: #e3f5e8; --bad: #c0262d; --bad-bg: #fde6e7;
+    --panel: #ffffff; --line: #9aa6b8; --box: #ffffff; --box-border: #4a5a78;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #151a24; --grid: #222a38; --ink: #e6e9ef; --muted: #a3acbb;
+      --pen: #8fb0ff; --ok: #5fd08a; --ok-bg: #1b3a26; --bad: #ff7b7f;
+      --bad-bg: #452023; --panel: #1b2130; --line: #5b6679; --box: #10141d; --box-border: #8b98b3;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #151a24; --grid: #222a38; --ink: #e6e9ef; --muted: #a3acbb;
+    --pen: #8fb0ff; --ok: #5fd08a; --ok-bg: #1b3a26; --bad: #ff7b7f;
+    --bad-bg: #452023; --panel: #1b2130; --line: #5b6679; --box: #10141d; --box-border: #8b98b3;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; color: var(--ink); background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 1.125rem; line-height: 1.6;
+  }
+  main { max-width: 60rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  header h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .5rem; }
+  header p { margin: 0 0 2rem; color: var(--muted); max-width: 42rem; }
+
+  section.task {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 1.5rem 1.5rem 1.25rem; margin-bottom: 1.75rem;
+  }
+  .task-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  section.task h2 { font-size: 1.25rem; margin: 0; }
+  .counter { font-weight: 600; color: var(--muted); font-size: 1rem; }
+  .counter.full { color: var(--ok); }
+  section.task .cmd { margin: .25rem 0 1rem; color: var(--muted); }
+
+  .rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
+    gap: .9rem 2.5rem;
+  }
+  @media (max-width: 760px) {
+    .rows { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
+  }
+  .row { white-space: nowrap; overflow-x: auto; padding: .2rem 0; display: flex; align-items: center; flex-wrap: nowrap; }
+  .row .lbl { display: inline-block; width: 1.7rem; flex: none; color: var(--muted); }
+
+  .slot { display: inline-flex; align-items: center; margin: 0 .35rem; flex: none; }
+  input.blank {
+    font-family: "Caveat", "Comic Sans MS", cursive;
+    font-size: 1.6rem; font-weight: 700; color: var(--pen);
+    width: 6.5rem; height: 2.5rem; text-align: center;
+    border: 2px solid var(--box-border); border-radius: 6px;
+    background: var(--box); padding: 0 .3rem; line-height: 1;
+  }
+  input.blank:focus { outline: 3px solid var(--pen); outline-offset: 2px; }
+  input.blank.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+  input.blank.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+  .mark { display: inline-block; width: 1.5rem; margin-left: .2rem; font-size: 1.4rem; font-weight: 700; text-align: center; }
+  .mark.ok { color: var(--ok); }
+  .mark.bad { color: var(--bad); }
+
+  details { margin-top: 1.25rem; color: var(--muted); font-size: 1rem; }
+  summary { cursor: pointer; }
+  details ul { margin: .5rem 0 0; padding-left: 1.25rem; }
+
+  .total {
+    border-top: 2px solid var(--ink); padding-top: 1.25rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem;
+  }
+  .total .score { font-family: "Caveat", "Comic Sans MS", cursive; font-size: 2.6rem; color: var(--pen); line-height: 1; }
+  button {
+    font: inherit; font-size: 1rem; font-weight: 600; padding: .5rem 1.1rem; border-radius: 4px;
+    border: 2px solid var(--pen); background: transparent; color: var(--pen); cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Zamiana jednostek</h1>
+    <p>Wpisz liczby w okienka. Zaraz po wpisaniu zobaczysz zielony ptaszek ✓ albo czerwony krzyżyk ✗. Liczby dziesiętne możesz pisać z przecinkiem (0,5) albo z kropką (0.5).</p>
+  </header>
+
+  <div id="tasks"></div>
+
+  <div class="total">
+    <span class="score" id="score" aria-live="polite">0 / 0 pkt</span>
+    <button type="button" id="reset">Wyczyść odpowiedzi</button>
+  </div>
+</main>
+
+<script>
+  // Liczby w nawiasach kwadratowych to poprawne odpowiedzi (okienka do wpisania).
+  var TASKS = [
+    {
+      title: "Zadanie 1.",
+      rows: [
+        "6,4 kg = [640] dag = [6400] g",
+        "[0.57] kg = 57 dag = [570] g",
+        "[0.32] kg = [32] dag = 320 g",
+        "2,7 t = [2700] kg = [270000] dag",
+        "3,05 kg = [305] dag = [3050] g",
+        "[0.45] t = 450 kg = [45000] dag",
+        "12 dag = [120] g = [0.12] kg",
+        "[0.075] kg = [7.5] dag = 75 g"
+      ],
+      hints: ["1 t = 1000 kg", "1 kg = 100 dag", "1 dag = 10 g"]
+    },
+    {
+      title: "Zadanie 2.",
+      rows: [
+        "7 dm² = [700] cm²",
+        "4600 cm² = [0.46] m²",
+        "2,8 ha = [280] a",
+        "[0.09] ha = 9 a = [900] m²",
+        "3,5 m² = [350] dm²",
+        "80 cm² = [0.8] dm²",
+        "1,2 a = [120] m²",
+        "6 m² = [60000] cm²"
+      ],
+      hints: ["1 dm² = 100 cm²", "1 m² = 100 dm² = 10 000 cm²", "1 a = 100 m²", "1 ha = 100 a"]
+    },
+    {
+      title: "Zadanie 3.",
+      rows: [
+        "0,6 dm³ = [0.6] l",
+        "85 cm³ = [0.085] l",
+        "3 l = [3000] cm³",
+        "24 ml = [24000] mm³",
+        "2,5 l = [2500] ml",
+        "750 ml = [0.75] dm³",
+        "4000 mm³ = [4] cm³",
+        "1,8 dm³ = [1800] cm³"
+      ],
+      hints: ["1 dm³ = 1 l", "1 l = 1000 ml = 1000 cm³", "1 ml = 1 cm³", "1 cm³ = 1000 mm³"]
+    }
+  ];
+
+  var LETTERS = "abcdefghijkl";
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function render() {
+    var root = document.getElementById("tasks");
+    TASKS.forEach(function (t, ti) {
+      var sec = document.createElement("section");
+      sec.className = "task";
+      var rowsHtml = t.rows.map(function (r, ri) {
+        var n = 0;
+        var parts = r.split(/(\[[^\]]+\])/).map(function (p) {
+          var m = p.match(/^\[([^\]]+)\]$/);
+          if (!m) return escapeHtml(p);
+          n++;
+          var label = "Zadanie " + (ti + 1) + LETTERS[ri] + ", okienko " + n;
+          return '<span class="slot"><input class="blank" data-answer="' + m[1] +
+                 '" inputmode="decimal" autocomplete="off" aria-label="' + label +
+                 '"><span class="mark" aria-live="polite"></span></span>';
+        }).join("");
+        return '<div class="row"><span class="lbl">' + LETTERS[ri] + ')</span>' + parts + '</div>';
+      }).join("");
+      sec.innerHTML =
+        '<div class="task-head"><h2>' + t.title + '</h2><span class="counter"></span></div>' +
+        '<p class="cmd">Uzupełnij:</p>' +
+        '<div class="rows">' + rowsHtml + '</div>' +
+        '<details><summary>Przypomnij sobie zależności</summary><ul>' +
+        t.hints.map(function (h) { return "<li>" + h + "</li>"; }).join("") +
+        '</ul></details>';
+      root.appendChild(sec);
+    });
+  }
+
+  function parseAnswer(raw) {
+    var s = String(raw).trim().replace(/\s+/g, "").replace(",", ".");
+    if (!/^-?(\d+(\.\d*)?|\.\d+)$/.test(s)) return null;
+    return parseFloat(s);
+  }
+  function same(a, b) { return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)); }
+
+  function check(input) {
+    var mark = input.nextElementSibling;
+    input.classList.remove("ok", "bad");
+    mark.className = "mark";
+    mark.textContent = "";
+    if (input.value.trim() === "") return;
+    var val = parseAnswer(input.value);
+    var good = val !== null && same(val, parseFloat(input.dataset.answer));
+    input.classList.add(good ? "ok" : "bad");
+    mark.classList.add(good ? "ok" : "bad");
+    mark.textContent = good ? "✓" : "✗";
+    mark.setAttribute("aria-label", good ? "dobrze" : "źle");
+  }
+
+  function updateScores() {
+    var total = 0, all = 0;
+    document.querySelectorAll("section.task").forEach(function (sec) {
+      var inputs = sec.querySelectorAll("input.blank");
+      var good = sec.querySelectorAll("input.blank.ok").length;
+      var c = sec.querySelector(".counter");
+      c.textContent = good + " / " + inputs.length;
+      c.classList.toggle("full", good === inputs.length);
+      total += good; all += inputs.length;
+    });
+    document.getElementById("score").textContent = total + " / " + all + " pkt";
+  }
+
+  render();
+  document.querySelectorAll("input.blank").forEach(function (i) {
+    i.addEventListener("input", function () { check(i); updateScores(); });
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    document.querySelectorAll("input.blank").forEach(function (i) { i.value = ""; check(i); });
+    updateScores();
+  });
+  updateScores();
+</script>
+</body>
+</html>
