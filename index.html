@@ -58,28 +58,38 @@
     grid-template-columns: 1fr 1fr;
     grid-template-rows: repeat(4, auto);
     grid-auto-flow: column;
-    gap: .9rem 2.5rem;
+    gap: .6rem 3rem;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 520px) {
+    input.blank { width: 4.4rem; font-size: 1.4rem; }
+    section.task { padding: 1.25rem 1rem 1rem; }
+  }
+  @media (max-width: 880px) {
     .rows { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
   }
-  .row { white-space: nowrap; overflow-x: auto; padding: .2rem 0; display: flex; align-items: center; flex-wrap: nowrap; }
-  .row .lbl { display: inline-block; width: 1.7rem; flex: none; color: var(--muted); }
+  .row { padding: .2rem 0 .2rem 1.9rem; text-indent: -1.9rem; line-height: 2.9rem; }
+  .row .lbl { display: inline-block; width: 1.9rem; text-indent: 0; color: var(--muted); }
 
-  .slot { display: inline-flex; align-items: center; margin: 0 .35rem; flex: none; }
+  .slot { position: relative; display: inline-block; margin: 0 .3rem; text-indent: 0; vertical-align: middle; line-height: 1; }
   input.blank {
     font-family: "Caveat", "Comic Sans MS", cursive;
     font-size: 1.6rem; font-weight: 700; color: var(--pen);
-    width: 6.5rem; height: 2.5rem; text-align: center;
+    width: 5.2rem; height: 2.3rem; text-align: center;
     border: 2px solid var(--box-border); border-radius: 6px;
     background: var(--box); padding: 0 .3rem; line-height: 1;
   }
   input.blank:focus { outline: 3px solid var(--pen); outline-offset: 2px; }
   input.blank.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
   input.blank.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
-  .mark { display: inline-block; width: 1.5rem; margin-left: .2rem; font-size: 1.4rem; font-weight: 700; text-align: center; }
-  .mark.ok { color: var(--ok); }
-  .mark.bad { color: var(--bad); }
+  .mark {
+    position: absolute; top: -.55rem; right: -.55rem;
+    width: 1.35rem; height: 1.35rem; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    font-family: system-ui, sans-serif; font-size: .85rem; font-weight: 700; color: #fff;
+    pointer-events: none;
+  }
+  .mark.ok { display: flex; background: var(--ok); }
+  .mark.bad { display: flex; background: var(--bad); }
 
   details { margin-top: 1.25rem; color: var(--muted); font-size: 1rem; }
   summary { cursor: pointer; }
